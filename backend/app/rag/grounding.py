@@ -1,6 +1,6 @@
-"""Validador de citas — la capa 2 de la regla no negociable (CLAUDE.md §2).
+"""Citation validator — the second enforcement layer of the grounding guarantee.
 
-Rechaza toda respuesta que cite un chunk_id que no está en el contexto recuperado.
+Rejects any answer that cites a chunk_id not present in the retrieved context.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ class GroundingResult:
 
 
 def validate_grounding(answer_chunk_ids: list[str], retrieved_chunks: list[Chunk]) -> GroundingResult:
-    """Verifica que cada chunk_id citado en la respuesta esté entre los recuperados."""
+    """Check that every chunk_id cited in the answer is among the retrieved chunks."""
     retrieved_ids = {chunk["chunk_id"] for chunk in retrieved_chunks}
     ungrounded = [cid for cid in answer_chunk_ids if cid not in retrieved_ids]
     return GroundingResult(is_grounded=not ungrounded, ungrounded_chunk_ids=ungrounded)

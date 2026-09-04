@@ -1,4 +1,4 @@
-"""CLI del arnés de evaluación: corre golden.jsonl y reporta las cuatro métricas."""
+"""Evaluation harness CLI: runs golden.jsonl and reports the four metrics."""
 
 from __future__ import annotations
 
@@ -17,8 +17,8 @@ def load_golden_set(path: Path = GOLDEN_PATH) -> list[dict]:
 
 def main() -> None:
     golden_set = load_golden_set()
-    print(f"Golden set: {len(golden_set)} preguntas")
-    raise NotImplementedError("arnés de evaluación pendiente de implementar")
+    print(f"Golden set: {len(golden_set)} questions")
+    raise NotImplementedError("evaluation harness not implemented yet")
 
 
 if __name__ == "__main__":

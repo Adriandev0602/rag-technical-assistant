@@ -1,5 +1,5 @@
-"""Orquestación: retrieve -> prompt -> generar -> validar. Único módulo de rag/ (junto a
-retrieve.py) con I/O, porque coordina llamadas a proveedor y umbral de abstención.
+"""Orchestration: retrieve -> prompt -> generate -> validate. The other rag/ module (with
+retrieve.py) allowed I/O, since it coordinates provider calls and the abstention threshold.
 """
 
 from __future__ import annotations
@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from app.llm.base import LLMProvider
 from app.rag.chunking import Chunk
 
-ABSTENTION_MESSAGE = "No encontré esto en el corpus."
+ABSTENTION_MESSAGE = "I couldn't find this in the corpus."
 
 
 @dataclass
@@ -25,7 +25,7 @@ def answer_question(
     provider: LLMProvider,
     abstention_threshold: float,
 ) -> Answer:
-    """Si el mejor score de recuperación queda por debajo del umbral, se abstiene sin llamar
-    al generador. Si no, genera y valida el grounding antes de devolver la respuesta.
+    """If the best retrieval score falls below the threshold, abstain without calling the
+    generator. Otherwise generate and validate grounding before returning the answer.
     """
     raise NotImplementedError

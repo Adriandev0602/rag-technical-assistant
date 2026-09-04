@@ -1,4 +1,4 @@
-"""Implementación de LLMProvider sobre el SDK de Anthropic."""
+"""LLMProvider implementation on top of the Anthropic SDK."""
 
 from __future__ import annotations
 

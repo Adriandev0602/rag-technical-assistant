@@ -1,106 +1,106 @@
-# CLAUDE.md — Asistente Técnico con RAG
+# CLAUDE.md — RAG Technical Assistant
 
-> Contexto arquitectónico del proyecto. Leelo completo antes de iterar.
-> Si vas a tomar una decisión que contradiga algo de acá, decilo explícitamente antes de escribir código.
+> Architectural context for this project. Read it in full before iterating.
+> If you're about to make a decision that contradicts something here, say so explicitly before writing code.
 
 ---
 
-## 1. Qué es esto
+## 1. What this is
 
-Un asistente conversacional que responde preguntas sobre un corpus técnico privado
-(documentación, reglamentos, manuales) **citando siempre la fuente exacta de donde sacó cada
-afirmación**, y que se niega a responder cuando la recuperación no alcanza.
+A conversational assistant that answers questions over a private technical corpus
+(documentation, rulebooks, manuals) while **always citing the exact source of every claim it
+makes**, and refusing to answer when retrieval isn't good enough.
 
-Es un proyecto de portfolio y su tesis es específica: **el problema de RAG no es de prompting, es
-de evaluación.** Cualquiera arma un "chat con tu PDF" en una tarde. Lo que casi nadie arma es el
-arnés que detecta cuándo ese chat empezó a mentir.
+This is a portfolio project with a specific thesis: **the hard part of RAG isn't prompting, it's
+evaluation.** Anyone can wire up a "chat with your PDF" in an afternoon. Almost nobody builds the
+harness that catches the moment that chat starts lying.
 
-### Relación con arbiter-mars
+### Relationship to arbiter-mars
 
-Este proyecto es el complemento de [`arbiter-mars`](https://github.com/Adriandev0602/arbiter-mars),
-y comparte su tesis de fondo: **control arquitectónico estricto sobre un modelo probabilístico.**
+This project is the companion to [`arbiter-mars`](https://github.com/Adriandev0602/arbiter-mars),
+and shares its underlying thesis: **strict architectural control over a probabilistic model.**
 
-| | arbiter-mars | este proyecto |
+| | arbiter-mars | this project |
 |---|---|---|
-| Regla dura | El LLM nunca hace matemática | El LLM nunca responde sin fuente |
-| Cómo se garantiza | Grafo que enruta por `ToolNode` | Contrato de recuperación + abstención |
-| Qué demuestra | Tool calling determinista | Recuperación auditable y evaluada |
+| Hard rule | The LLM never does math | The LLM never answers without a source |
+| How it's enforced | A graph that routes through `ToolNode` | Retrieval contract + abstention |
+| What it demonstrates | Deterministic tool calling | Auditable, evaluated retrieval |
 
-**Corpus recomendado para arrancar:** el reglamento oficial de Terraforming Mars más el FAQ de la
-comunidad. Razones prácticas: ya conocés el dominio a fondo (podés escribir el golden set sin
-investigar), es texto denso con referencias cruzadas (RAG genuinamente difícil, no un demo de
-juguete), y deja los dos proyectos como un portfolio con un punto de vista en vez de dos repos
-sueltos. Si preferís otro corpus, cambiá solo la carpeta `corpus/` — nada más del diseño depende
-del dominio.
-
----
-
-## 2. La regla no negociable
-
-**Toda oración de la respuesta que afirme un hecho tiene que tener un `chunk_id` detrás.**
-
-Esto no es una preferencia de UX. Es la propiedad que el proyecto existe para demostrar. Se sostiene
-en tres capas, y las tres tienen que seguir en pie:
-
-1. **El system prompt** obliga al modelo a emitir respuestas en un formato estructurado donde cada
-   afirmación viene acompañada de los ids de los chunks que la respaldan.
-2. **El validador post-generación** (`app/rag/grounding.py`) rechaza toda respuesta que cite un
-   `chunk_id` que no está en el contexto recuperado. Si el modelo alucina una cita, la respuesta no
-   sale — se reintenta una vez y después se degrada a abstención.
-3. **El umbral de abstención**: si el mejor score de recuperación queda por debajo del umbral
-   configurado, no se llama al modelo generador en absoluto. Se responde "no encontré esto en el
-   corpus" y se listan las consultas sugeridas.
-
-Una respuesta plausible sin fuente es un bug de severidad alta, no una respuesta mediocre.
-Prefiero que el sistema diga "no sé" de más a que invente de menos.
+**Recommended starting corpus:** the official Terraforming Mars rulebook plus the community FAQ.
+Practical reasons: the domain is already well understood (the golden set can be written without
+research), the text is dense with cross-references (genuinely hard RAG, not a toy demo), and it
+turns two repos into one portfolio with a coherent point of view instead of two unrelated
+projects. Swap in a different corpus if you prefer — nothing else in the design depends on the
+domain, only the `corpus/` folder does.
 
 ---
 
-## 3. Estructura
+## 2. The non-negotiable rule
+
+**Every sentence in an answer that asserts a fact must have a `chunk_id` behind it.**
+
+This isn't a UX preference. It's the property the project exists to demonstrate. It's enforced by
+three layers, and all three have to stay standing:
+
+1. **The system prompt** forces the model to emit answers in a structured format where every claim
+   is accompanied by the ids of the chunks that back it.
+2. **The post-generation validator** (`app/rag/grounding.py`) rejects any answer that cites a
+   `chunk_id` not present in the retrieved context. If the model hallucinates a citation, the
+   answer doesn't go out — it's retried once, then degraded to abstention.
+3. **The abstention threshold**: if the best retrieval score falls below the configured threshold,
+   the generator model isn't called at all. The system responds "I couldn't find this in the
+   corpus" and lists suggested queries instead.
+
+A plausible answer without a source is a high-severity bug, not a mediocre answer. The system
+should say "I don't know" too often rather than make things up too little.
+
+---
+
+## 3. Structure
 
 ```
 backend/app/
 ├── rag/
-│   ├── chunking.py      # documento → chunks con metadata (fuente, sección, offsets)
-│   ├── embed.py         # chunks → vectores (batch, con caché en disco)
-│   ├── retrieve.py      # consulta → chunks candidatos + scores
-│   ├── rerank.py        # reordenamiento del top-k (opcional, ver §7)
-│   ├── grounding.py     # validador de citas — la capa 2 de §2
-│   └── answer.py        # orquestación: retrieve → prompt → generar → validar
+│   ├── chunking.py      # document -> chunks with metadata (source, section, offsets)
+│   ├── embed.py         # chunks -> vectors (batched, disk-cached)
+│   ├── retrieve.py      # query -> candidate chunks + scores
+│   ├── rerank.py        # top-k reordering (optional, see §7)
+│   ├── grounding.py     # citation validator — layer 2 of §2
+│   └── answer.py        # orchestration: retrieve -> prompt -> generate -> validate
 ├── llm/
-│   ├── base.py          # interfaz abstracta del proveedor (ver §5)
+│   ├── base.py          # abstract provider interface (see §5)
 │   ├── openai.py
 │   ├── anthropic.py
 │   └── gemini.py
 ├── db/
-│   └── supabase.py      # ÚNICA capa con I/O de persistencia
+│   └── supabase.py      # THE ONLY layer with persistence I/O
 ├── api/
 │   └── routes.py        # FastAPI: /ingest, /ask, /health
 └── evals/
-    ├── golden.jsonl     # el set de referencia (ver §6)
-    ├── metrics.py       # recall@k, groundedness, tasa de abstención
-    └── run.py           # CLI del arnés
+    ├── golden.jsonl     # the reference set (see §6)
+    ├── metrics.py       # recall@k, groundedness, abstention rate
+    └── run.py           # harness CLI
 ```
 
-**Reglas de frontera** (mismas que en arbiter-mars, y por la misma razón):
+**Boundary rules** (same as in arbiter-mars, and for the same reason):
 
-- Los módulos de `rag/` son funciones puras salvo `retrieve.py` y `answer.py`. No importan FastAPI
-  ni Supabase. Reciben datos, devuelven datos.
-- `chunking.py` no sabe qué modelo de embeddings se va a usar. `embed.py` no sabe de dónde salieron
-  los chunks. Si te encontrás pasando un objeto de configuración global entre los dos, parás y lo
-  rediseñás.
-- Todo I/O de persistencia vive en `db/`. Si `rag/` necesita algo de la base, se lo pasan como
-  argumento ya resuelto.
+- Modules in `rag/` are pure functions except `retrieve.py` and `answer.py`. They don't import
+  FastAPI or Supabase. They take data in, return data out.
+- `chunking.py` doesn't know which embedding model will be used. `embed.py` doesn't know where the
+  chunks came from. If you catch yourself passing a global config object between the two, stop and
+  redesign.
+- All persistence I/O lives in `db/`. If `rag/` needs something from the database, it's passed in
+  already resolved.
 
 ---
 
-## 4. Contrato de recuperación
+## 4. Retrieval contract
 
-Un chunk es un objeto con esta forma, y esto no cambia sin actualizar este documento:
+A chunk is an object with this shape, and it doesn't change without updating this document:
 
 ```python
 {
-    "chunk_id": "rulebook__3.2__004",   # <fuente>__<sección>__<índice>, estable entre reingestas
+    "chunk_id": "rulebook__3.2__004",   # <source>__<section>__<index>, stable across re-ingestions
     "text": "...",
     "source": "rulebook.pdf",
     "section": "3.2 Standard Projects",
@@ -109,26 +109,26 @@ Un chunk es un objeto con esta forma, y esto no cambia sin actualizar este docum
 }
 ```
 
-El `chunk_id` tiene que ser **estable**: reingestar el mismo documento sin cambios produce
-exactamente los mismos ids. Si no, el golden set se rompe en cada corrida y el arnés de evaluación
-no sirve para nada. Esa es la razón de que el id derive de la sección y no de un contador global.
+The `chunk_id` must be **stable**: re-ingesting the same document with no changes must produce
+exactly the same ids. Otherwise the golden set breaks on every run and the evaluation harness
+becomes useless. That's why the id is derived from the section rather than a global counter.
 
-**Decisiones de chunking que hay que documentar cuando se tomen** (escribí el porqué en el commit,
-no solo el qué):
+**Chunking decisions that need to be documented when made** (write down the *why* in the commit,
+not just the *what*):
 
-- Tamaño objetivo y solapamiento. Empezá en ~500 tokens con 15% de solapamiento y ajustá contra el
-  golden set, no contra la intuición.
-- Cómo se cortan las tablas y las listas. Cortar una tabla al medio es la causa número uno de
-  recuperación mala en documentación técnica.
-- Si se hace *contextual retrieval* (prependear un resumen de la sección a cada chunk antes de
-  embeber). Es caro en tokens de ingesta y suele valer la pena. Medilo, no lo asumas.
+- Target size and overlap. Start around ~500 tokens with 15% overlap and tune against the golden
+  set, not intuition.
+- How tables and lists get split. Cutting a table in half is the number-one cause of bad retrieval
+  in technical documentation.
+- Whether to do *contextual retrieval* (prepending a section summary to each chunk before
+  embedding). It's expensive in ingestion tokens and usually worth it. Measure it, don't assume it.
 
 ---
 
-## 5. La capa de proveedores
+## 5. The provider layer
 
-Nada fuera de `llm/` puede importar el SDK de un proveedor concreto. Todo pasa por la interfaz de
-`llm/base.py`:
+Nothing outside `llm/` may import a concrete provider's SDK. Everything goes through the
+`llm/base.py` interface:
 
 ```python
 class LLMProvider(Protocol):
@@ -136,123 +136,126 @@ class LLMProvider(Protocol):
     def embed(self, texts: list[str]) -> list[list[float]]: ...
 ```
 
-El proveedor se elige por variable de entorno (`LLM_PROVIDER=openai|anthropic|gemini`) y el sistema
-tiene que funcionar igual con los tres. **Esto no es sobre-ingeniería, es el punto del ejercicio**:
+The provider is selected via an environment variable (`LLM_PROVIDER=openai|anthropic|gemini`) and
+the system has to behave identically with all three. **This isn't over-engineering, it's the point
+of the exercise:**
 
-- El arnés de evaluación (§6) corre el mismo golden set contra los tres proveedores y produce una
-  tabla comparativa. Ese es un resultado publicable en el README y es lo que hace que el proyecto no
-  sea un demo más.
-- En una startup, cuando cambia el precio o sale un modelo nuevo, migrar tiene que costar horas y no
-  semanas. Poder decir eso en una entrevista, con el código detrás, vale más que una lista de
-  tecnologías.
+- The evaluation harness (§6) runs the same golden set against all three providers and produces a
+  comparison table. That's a publishable result for the README, and it's what keeps this from
+  being just another demo.
+- At a startup, when pricing changes or a new model ships, migrating should cost hours, not weeks.
+  Being able to say that in an interview, with the code to back it up, is worth more than a list of
+  technologies.
 
-**Ojo con la trampa de los embeddings:** los vectores de proveedores distintos no son comparables.
-El índice queda atado al modelo de embeddings que lo construyó. Guardá el nombre del modelo en la
-metadata del índice y fallá ruidosamente si alguien consulta con un modelo distinto al de ingesta.
+**Watch out for the embeddings trap:** vectors from different providers aren't comparable. The
+index is tied to whichever embedding model built it. Store the embedding model's name in the
+index's metadata and fail loudly if someone queries with a different model than the one used at
+ingestion time.
 
 ---
 
-## 6. Evaluación
+## 6. Evaluation
 
-Sin esto el proyecto no existe. Es la mitad de la tesis.
+Without this, the project doesn't exist. It's half the thesis.
 
-**Golden set** — `evals/golden.jsonl`, mínimo 40 entradas escritas a mano:
+**Golden set** — `evals/golden.jsonl`, at least 40 hand-written entries:
 
 ```json
 {
   "id": "g-018",
-  "question": "¿Puedo pagar un proyecto estándar con acero?",
+  "question": "Can I pay for a standard project with steel?",
   "expected_chunk_ids": ["rulebook__3.2__004"],
-  "expected_answer_contains": ["no", "acero", "solo cartas de construcción"],
+  "expected_answer_contains": ["no", "steel", "building cards only"],
   "should_abstain": false
 }
 ```
 
-Incluí a propósito **al menos 8 preguntas que el corpus no puede responder**, con
-`should_abstain: true`. Un sistema que nunca se abstiene está mintiendo y el golden set tiene que
-poder demostrarlo.
+Deliberately include **at least 8 questions the corpus can't answer**, with `should_abstain: true`.
+A system that never abstains is lying, and the golden set needs to be able to prove it.
 
-**Métricas que reporta `evals/run.py`:**
+**Metrics reported by `evals/run.py`:**
 
-| Métrica | Qué mide | Umbral mínimo |
+| Metric | What it measures | Minimum threshold |
 |---|---|---|
-| `recall@5` | ¿el chunk correcto está entre los 5 recuperados? | ≥ 0.85 |
-| `groundedness` | % de afirmaciones con cita válida al corpus | 1.00 — sin excepciones |
-| `abstention_precision` | de las veces que se abstuvo, ¿cuántas correspondía? | ≥ 0.90 |
-| `answer_match` | % que contiene los términos esperados | ≥ 0.75 |
+| `recall@5` | Is the correct chunk among the top 5 retrieved? | ≥ 0.85 |
+| `groundedness` | % of claims with a valid citation to the corpus | 1.00 — no exceptions |
+| `abstention_precision` | Of the times it abstained, how many were warranted? | ≥ 0.90 |
+| `answer_match` | % containing the expected terms | ≥ 0.75 |
 
-`groundedness` es la única que no admite regresión. Las otras se negocian con datos.
+`groundedness` is the only one that admits no regression. The others are negotiable against data.
 
-**Regla de trabajo:** cada cambio en chunking, prompts o parámetros de recuperación se acompaña de
-una corrida del arnés en el commit. Si una métrica baja, el mensaje del commit explica por qué el
-trade-off vale la pena. Sin corrida, no entra.
-
----
-
-## 7. Fuera de alcance, a propósito
-
-Escribir esto importa tanto como lo de adentro: un alcance que no está cerrado no se termina nunca.
-
-- **Multi-tenancy y cuentas de usuario.** Un corpus, un índice.
-- **Ingesta en tiempo real.** La ingesta es un comando que se corre a mano.
-- **Fine-tuning.** Todo es recuperación más prompting.
-- **Reranking con modelo dedicado** (`rerank.py`) queda como *stretch goal*. Armalo solo si el
-  arnés muestra que `recall@5` está bien pero la respuesta igual sale mal — que es el síntoma
-  específico que el reranking arregla. Si no, es complejidad sin causa.
-- **Streaming de tokens al frontend.** Está bueno, no demuestra nada nuevo. Al final si sobra tiempo.
+**Working rule:** every change to chunking, prompts, or retrieval parameters ships with a harness
+run in the same commit. If a metric drops, the commit message explains why the trade-off is worth
+it. No run, no merge.
 
 ---
 
-## 8. Orden de construcción
+## 7. Deliberately out of scope
 
-No arranques por el frontend. Cada hito tiene que quedar verificable antes de pasar al siguiente.
+Writing this down matters as much as what's inside: a scope that's never closed never ships.
 
-1. **Ingesta y chunking.** Corpus en `corpus/` → chunks en Supabase con ids estables. Verificable:
-   reingestar dos veces produce ids idénticos.
-2. **Embeddings e índice.** Pinecone poblado, con el modelo de embeddings guardado en metadata.
-   Verificable: una consulta a mano devuelve chunks visiblemente relevantes.
-3. **Golden set.** Las 40 entradas, escritas antes de tocar la generación. Escribirlas después es
-   escribirlas para que pasen.
-4. **Arnés de evaluación** midiendo solo `recall@k`. Ya podés optimizar chunking con datos.
-5. **Generación con citas** más el validador de grounding. Acá se vuelve el proyecto.
-6. **Abstención** y el resto de las métricas.
-7. **API de FastAPI** con `/ingest`, `/ask`, `/health`.
-8. **Comparativa de proveedores**: los tres, mismo golden set, tabla al README.
-9. **Frontend mínimo.** Una caja de texto y las citas clickeables. Nada más.
-10. **Deploy** en Vercel más Supabase, con la corrida del arnés en CI.
-
-Un README honesto en el paso 5 vale más que un producto pulido sin el paso 3.
+- **Multi-tenancy and user accounts.** One corpus, one index.
+- **Real-time ingestion.** Ingestion is a command run by hand.
+- **Fine-tuning.** Everything is retrieval plus prompting.
+- **Reranking with a dedicated model** (`rerank.py`) stays a *stretch goal*. Only build it if the
+  harness shows `recall@5` is fine but the final answer is still wrong — that's the specific
+  symptom reranking fixes. Otherwise it's complexity without a cause.
+- **Token streaming to the frontend.** Nice to have, doesn't prove anything new. Only if there's
+  time left at the end.
 
 ---
 
-## 9. Convenciones
+## 8. Build order
 
-- **Tests con cada módulo.** Los de `rag/` son funciones puras: no hay excusa para no cubrirlas.
-  El listón lo puso arbiter-mars con 533 tests; no bajes de ahí en proporción.
-- **Sin `except: pass`.** Si una llamada al proveedor falla, se propaga con el contexto de qué
-  consulta la causó.
-- **Claves solo por entorno.** `.env.example` versionado, `.env` nunca.
-- **Commits en imperativo**, describiendo el porqué. `ajusta chunking a 400 tokens: recall@5 sube
-  0.81 → 0.89` es útil; `fix chunking` no.
-- **Este archivo se actualiza cuando cambia una decisión de diseño**, en el mismo commit. Un
-  CLAUDE.md desactualizado es peor que no tenerlo.
-- Mantené un `AGENTS.md` como copia agnóstica de herramienta, igual que en arbiter-mars.
+Don't start with the frontend. Each milestone has to be verifiable before moving to the next.
+
+1. **Ingestion and chunking.** Corpus in `corpus/` -> chunks in Supabase with stable ids.
+   Verifiable: re-ingesting twice produces identical ids.
+2. **Embeddings and index.** Pinecone populated, with the embedding model saved in metadata.
+   Verifiable: a manual query returns visibly relevant chunks.
+3. **Golden set.** The 40 entries, written before touching generation. Writing them afterward means
+   writing them to pass.
+4. **Evaluation harness** measuring `recall@k` only. Chunking can now be optimized against data.
+5. **Generation with citations** plus the grounding validator. This is where it becomes the
+   project.
+6. **Abstention** and the rest of the metrics.
+7. **FastAPI** with `/ingest`, `/ask`, `/health`.
+8. **Provider comparison**: all three, same golden set, table in the README.
+9. **Minimal frontend.** A text box and clickable citations. Nothing more.
+10. **Deploy** on Vercel plus Supabase, with the harness run in CI.
+
+An honest README at step 5 is worth more than a polished product without step 3.
+
+---
+
+## 9. Conventions
+
+- **Tests alongside every module.** `rag/` modules are pure functions: there's no excuse not to
+  cover them. arbiter-mars set the bar at 533 tests; don't go below that in proportion.
+- **No `except: pass`.** If a provider call fails, it propagates with context about which query
+  caused it.
+- **Keys only via environment.** `.env.example` is versioned, `.env` never is.
+- **Commits in the imperative**, describing the why. `tune chunking to 400 tokens: recall@5 goes
+  0.81 → 0.89` is useful; `fix chunking` isn't.
+- **This document gets updated when a design decision changes**, in the same commit. A stale
+  design doc is worse than none.
+- Keep an `AGENTS.md` as a tool-agnostic copy, same as in arbiter-mars.
 
 ---
 
 ## 10. Definition of done
 
-El proyecto está terminado cuando **todo** esto es cierto:
+The project is done when **all** of this is true:
 
-- [ ] El arnés corre con un comando y reporta las cuatro métricas.
-- [ ] `groundedness` es 1.00 sobre el golden set completo.
-- [ ] El sistema se abstiene correctamente en las 8 preguntas sin respuesta.
-- [ ] El mismo golden set corrió contra los tres proveedores y la tabla está en el README.
-- [ ] Está desplegado y hay una URL que alguien puede abrir.
-- [ ] El README explica la tesis en los primeros dos párrafos, con números reales.
+- [ ] The harness runs with one command and reports all four metrics.
+- [ ] `groundedness` is 1.00 across the full golden set.
+- [ ] The system correctly abstains on all 8 unanswerable questions.
+- [ ] The same golden set has run against all three providers and the table is in the README.
+- [ ] It's deployed and there's a URL someone can open.
+- [ ] The README explains the thesis in the first two paragraphs, with real numbers.
 
-Cuando los seis estén tildados —**y no antes**— este bloque se agrega al CV, reemplazando los
-corchetes por los números que salieron:
+Once all six are checked — **and not before** — this block gets added to the resume, with the
+brackets replaced by the actual numbers:
 
 > **RAG Technical Assistant** — *Python · FastAPI · Pinecone · Supabase · Vercel*
 > - Built a retrieval assistant that cites a source for every claim and abstains when retrieval
@@ -265,4 +268,4 @@ corchetes por los números que salieron:
 >   Anthropic and Gemini, publishing the comparison — swapping providers is a config change.
 > - Shipped the whole thing solo on Vercel and Supabase with the eval harness running in CI.
 
-Hasta que exista, no va en el CV.
+Until it exists, it doesn't go on the resume.

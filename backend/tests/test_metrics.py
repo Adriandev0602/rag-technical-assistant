@@ -26,8 +26,8 @@ def test_abstention_precision():
 
 
 def test_answer_match_case_insensitive():
-    assert answer_match("No, solo con Cartas de Construcción", ["no", "cartas de construcción"]) == 1.0
+    assert answer_match("No, only with Building Cards", ["no", "building cards"]) == 1.0
 
 
 def test_answer_match_missing_term():
-    assert answer_match("Sí, con acero", ["no", "acero"]) == 0.5
+    assert answer_match("Yes, with steel", ["no", "steel"]) == 0.5

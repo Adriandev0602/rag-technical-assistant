@@ -1,4 +1,4 @@
-"""Implementación de LLMProvider sobre el SDK de Gemini."""
+"""LLMProvider implementation on top of the Gemini SDK."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Métricas del arnés de evaluación: recall@k, groundedness, abstention_precision, answer_match."""
+"""Evaluation harness metrics: recall@k, groundedness, abstention_precision, answer_match."""
 
 from __future__ import annotations
 

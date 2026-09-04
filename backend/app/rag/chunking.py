@@ -1,4 +1,4 @@
-"""Documento -> chunks con metadata estable. Función pura: no conoce el modelo de embeddings."""
+"""Document -> chunks with stable metadata. Pure function: knows nothing about the embedding model."""
 
 from __future__ import annotations
 
@@ -23,8 +23,8 @@ def chunk_document(
     target_tokens: int = 500,
     overlap_ratio: float = 0.15,
 ) -> list[Chunk]:
-    """Parte `text` en chunks con chunk_id estable: <source>__<section>__<índice>.
+    """Split `text` into chunks with a stable chunk_id: <source>__<section>__<index>.
 
-    Reingestar el mismo documento sin cambios debe producir exactamente los mismos ids.
+    Re-ingesting the same document with no changes must produce exactly the same ids.
     """
     raise NotImplementedError

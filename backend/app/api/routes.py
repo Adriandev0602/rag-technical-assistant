@@ -1,4 +1,4 @@
-"""FastAPI: /ingest, /ask, /health."""
+"""FastAPI app exposing /ingest, /ask, and /health."""
 
 from __future__ import annotations
 

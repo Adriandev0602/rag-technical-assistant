@@ -1,7 +1,7 @@
-"""Reordenamiento del top-k. Stretch goal — ver CLAUDE.md §7.
+"""Top-k reordering. Stretch goal.
 
-No implementar salvo que el arnés muestre recall@5 alto y respuesta igual mala:
-ese es el síntoma específico que el reranking arregla.
+Only implement if the evaluation harness shows recall@5 is good but the final
+answer is still wrong — that's the specific symptom reranking fixes.
 """
 
 from __future__ import annotations

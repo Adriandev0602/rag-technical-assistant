@@ -1,8 +1,8 @@
 # AGENTS.md
 
-Copia agnóstica de herramienta de `CLAUDE.md`. Cualquier asistente de código (Claude, Cursor,
-Copilot, etc.) que trabaje en este repo debe leer `CLAUDE.md` completo antes de iterar — ese
-archivo es la fuente de verdad sobre arquitectura, contrato de datos y alcance. Este archivo existe
-solo para que herramientas que no reconocen `CLAUDE.md` por convención lo encuentren igual.
+Tool-agnostic copy of `CLAUDE.md`. Any code assistant (Claude, Cursor, Copilot, etc.) working in
+this repo should read `CLAUDE.md` in full before iterating — that file is the source of truth on
+architecture, data contracts, and scope. This file exists only so tools that don't recognize
+`CLAUDE.md` by convention can still find it.
 
-Ver `CLAUDE.md` en la raíz del repo.
+See `CLAUDE.md` at the repo root.

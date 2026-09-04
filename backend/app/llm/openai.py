@@ -1,4 +1,4 @@
-"""Implementación de LLMProvider sobre el SDK de OpenAI."""
+"""LLMProvider implementation on top of the OpenAI SDK."""
 
 from __future__ import annotations
 

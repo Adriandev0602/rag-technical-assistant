@@ -1,4 +1,4 @@
-"""Chunks -> vectores. Función pura: no sabe de dónde salieron los chunks."""
+"""Chunks -> vectors. Pure function: doesn't know where the chunks came from."""
 
 from __future__ import annotations
 
@@ -6,5 +6,5 @@ from app.llm.base import LLMProvider
 
 
 def embed_chunks(texts: list[str], *, provider: LLMProvider) -> list[list[float]]:
-    """Embebe `texts` en batch usando el proveedor dado."""
+    """Embed `texts` in a batch using the given provider."""
     raise NotImplementedError

@@ -1,4 +1,4 @@
-"""Consulta -> chunks candidatos + scores. Único módulo de rag/ (junto a answer.py) con I/O."""
+"""Query -> candidate chunks + scores. One of the two rag/ modules (with answer.py) allowed I/O."""
 
 from __future__ import annotations
 
@@ -6,5 +6,5 @@ from app.rag.chunking import Chunk
 
 
 def retrieve(query: str, *, top_k: int = 5) -> list[tuple[Chunk, float]]:
-    """Devuelve hasta `top_k` chunks candidatos ordenados por score descendente."""
+    """Return up to `top_k` candidate chunks ordered by descending score."""
     raise NotImplementedError

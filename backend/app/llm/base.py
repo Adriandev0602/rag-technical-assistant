@@ -1,4 +1,4 @@
-"""Interfaz abstracta del proveedor de LLM. Nada fuera de llm/ importa un SDK concreto."""
+"""Abstract LLM provider interface. Nothing outside llm/ imports a concrete SDK."""
 
 from __future__ import annotations
 

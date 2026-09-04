@@ -1,4 +1,4 @@
-"""Única capa con I/O de persistencia. rag/ nunca importa esto directamente."""
+"""The only layer with persistence I/O. rag/ never imports this directly."""
 
 from __future__ import annotations
 

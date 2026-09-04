@@ -4,7 +4,7 @@ from app.rag.grounding import validate_grounding
 def _chunk(chunk_id: str) -> dict:
     return {
         "chunk_id": chunk_id,
-        "text": "texto",
+        "text": "some text",
         "source": "rulebook.pdf",
         "section": "3.2",
         "page": 1,
