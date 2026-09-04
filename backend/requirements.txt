@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic
+openai
+anthropic
+google-generativeai
+supabase
+pinecone-client
+tiktoken
+pytest
